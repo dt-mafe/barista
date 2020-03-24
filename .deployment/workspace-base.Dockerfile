@@ -47,14 +47,16 @@ RUN ./node_modules/.bin/ngcc \
 
 COPY --from=workspace-builders \
      /dynatrace/node_modules/@dynatrace/barista-builders \
-     ./node_modules/@dynatrace/barista-builders
+     ./dist/barista-builders
 
-COPY ./angular.json ./
+# Cleanup image that only the files that are ignored by git are persisted.
+RUN rm -rf \
+  tsconfig.json \
+  package.json \
+  package-lock.json
 
-COPY  ./entrypoint.sh /entrypoint.sh
+COPY  ./.deployment/entrypoint.sh /dynatrace/entrypoint.sh
 
-WORKDIR /tmp/workdir
-
-ENTRYPOINT [ "/entrypoint.sh" ]
+ENTRYPOINT [ "/dynatrace/entrypoint.sh" ]
 
 CMD [ "/bin/sh" ]

@@ -15,6 +15,6 @@
 !angular.json
 
 
-# Used by: /Dockerfile
+# Used by: /.deployment/workspace-base.Dockerfile
 !/libs/tools/builders
-!/entrypoint.sh
+!/.deployment

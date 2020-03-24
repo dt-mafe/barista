@@ -1,0 +1,80 @@
+pipeline {
+  agent {
+    node {
+      label 'k8s-barista-builder'
+    }
+  }
+
+  environment {
+    WORKSPACE_DIR = '/home/labuser'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/master']],
+          doGenerateSubmoduleConfigurations: false,
+          extensions: [
+            [
+              $class: 'CloneOption',
+              noTags: false,
+              reference: '',
+              shallow: true
+            ],
+            [
+              $class: 'RelativeTargetDirectory',
+              relativeTargetDir: './'
+            ]
+          ],
+          submoduleCfg: [],
+          userRemoteConfigs: [[ url: 'https://github.com/dynatrace-oss/barista.git' ]]
+        ])
+
+        prepareWorkspace()
+
+        configFileProvider(
+          [configFile(fileId: 'npmrc_for_artifactory', variable: 'NPM_RC')]) {
+          sh 'mv "$NPM_RC" .npmrc'
+        }
+
+        sh 'npm install @dynatrace/barista-icons @dynatrace/barista-fonts'
+      }
+    }
+
+    stage('ls') {
+      steps {
+        sh 'ls -lah ./'
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs deleteDirs: true
+    }
+  }
+}
+
+@NonCPS
+void prepareWorkspace() {
+  sh'''
+    files=$(ls -A $WORKSPACE_DIR)
+
+    for file in $files
+    do
+      ln -s "$WORKSPACE_DIR/$file" "$PWD/$file"
+    done
+
+  '''
+
+  // if [ ! "$(sha1sum --status -c package-lock.sha1)" ]; then
+  //   "
+
+  //   ⚠️ Need to install packages due to updated package-lock.json
+  //   "
+
+  //   npm ci --ignore-scripts
+  // fi
+
+}
